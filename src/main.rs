@@ -1,21 +1,17 @@
 extern crate term_size;
-
 use std::iter::FromIterator;
 
 
 fn main() {
-
-
     print_termline();
     for arg in std::env::args().skip(1) {
         match parse_int(&arg) {
             Some(value) => println!("{}", int_info(value, None)),
-            None => println!("Error: cannot parse '{}'.", arg),
+            None => println!("Error: cannot parse '{}' as a 64-bit signed integer.", arg),
         };
         print_termline();
     }
 }
-
 
 
 fn info_header(value: i64, min_bits: u32, num_bits: u32) -> String {
@@ -29,8 +25,8 @@ fn info_header(value: i64, min_bits: u32, num_bits: u32) -> String {
 }
 
 
-fn int_info(value: i64, bits_arg: Option<u32>) -> String {
-    let (min_bits, num_bits) = bit_size(value, bits_arg);
+fn int_info(value: i64, user_bits: Option<u32>) -> String {
+    let (min_bits, num_bits) = bit_size(value, user_bits);
     let disp_value: u64;
 
     if value >= 0 {
@@ -49,19 +45,19 @@ fn int_info(value: i64, bits_arg: Option<u32>) -> String {
 }
 
 
-fn bit_size(value: i64, bits_arg: Option<u32>) -> (u32, u32) {
+fn bit_size(value: i64, user_bits: Option<u32>) -> (u32, u32) {
     let min_bits: u32;
     let mut num_bits: u32;
 
     if value == 0 {
         min_bits = 1;
-        num_bits = bits_arg.unwrap_or(1);
+        num_bits = user_bits.unwrap_or(1);
     } else if value > 0 {
         min_bits = (value as f64).log2().floor() as u32 + 1;
-        num_bits = bits_arg.unwrap_or(min_bits);
+        num_bits = user_bits.unwrap_or(min_bits);
     } else {
         min_bits = (value.abs() as f64).log2().floor() as u32 + 2;
-        num_bits = match bits_arg {
+        num_bits = match user_bits {
             Some(value) => value,
             None => {
                 let mut best_fit = 64;
