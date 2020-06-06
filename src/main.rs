@@ -1,26 +1,71 @@
 extern crate term_size;
+extern crate arguably;
+
 use std::iter::FromIterator;
+use arguably::ArgParser;
 
 
-fn main() {
-    print_termline();
-    for arg in std::env::args().skip(1) {
-        match parse_int(&arg) {
-            Some(value) => println!("{}", int_info(value, None)),
-            None => println!("Error: cannot parse '{}' as a 64-bit signed integer.", arg),
-        };
-        print_termline();
-    }
+fn helptext() -> &'static str {
+"\
+Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
+
+  Integer conversion utility. Accepts integer input in [b]inary, [o]ctal,
+  [d]ecimal, or he[x]adecimal base, then displays the number in all four bases.
+
+  Use a single letter prefix to declare the base of the input, e.g. b1010.
+  The base defaults to decimal if the prefix is omitted.
+
+  This utility:
+
+  - Accepts integer literals with a leading zero, e.g. 0x123.
+  - Accepts multiple arguments.
+  - Displays the two's complement for negative integers.
+
+Arguments:
+  [integers]        List of integers to convert.
+
+Options:
+  -b, --bits <n>    Number of two's complement bits for negative integers.
+
+Flags:
+  -h, --help        Print this help text.
+  -v, --version     Print the application's version number.
+"
 }
 
 
-fn info_header(value: i64, min_bits: u32, num_bits: u32) -> String {
-    if value == 0 || value == 1 {
-        format!("req: 1 bit (unsigned)\n")
-    } else if value > 1 {
-        format!("req: {} bits (unsigned)\n", min_bits)
-    } else {
-        format!("req: {} bits (signed), showing {}-bit two's complement\n", min_bits, num_bits)
+fn main() {
+    let mut parser = ArgParser::new()
+        .helptext(helptext())
+        .version("0.1.0")
+        .option("bits b");
+
+    if let Err(err) = parser.parse() {
+        err.exit();
+    }
+
+    let user_bits: Option<u32> = match parser.value("bits").unwrap() {
+        Some(arg) => {
+            match arg.parse::<u32>() {
+                Ok(value) => Some(value),
+                Err(_) => {
+                    eprintln!("Error: cannot parse option value '{}' as an integer.", arg);
+                    std::process::exit(1);
+                }
+            }
+        },
+        None => None
+    };
+
+    if parser.has_args() {
+        print_termline();
+        for arg in parser.args() {
+            match parse_int(&arg) {
+                Some(value) => println!("{}", int_info(value, user_bits)),
+                None => println!("Error: cannot parse '{}' as a 64-bit signed integer.", arg),
+            };
+            print_termline();
+        }
     }
 }
 
@@ -79,18 +124,29 @@ fn bit_size(value: i64, user_bits: Option<u32>) -> (u32, u32) {
 }
 
 
+fn info_header(value: i64, min_bits: u32, num_bits: u32) -> String {
+    if value == 0 || value == 1 {
+        format!("req: 1 bit (unsigned)\n")
+    } else if value > 1 {
+        format!("req: {} bits (unsigned)\n", min_bits)
+    } else {
+        format!("req: {} bits (signed), showing {}-bit two's complement\n", min_bits, num_bits)
+    }
+}
+
+
 fn uint_info(value: u64, num_bits: u32) -> String {
     format!(
         "hex: {}\ndec: {}\noct: {:o}\nbin: {}",
-        spaced_string(&format!("{:X}", value), ' ', 2),
-        spaced_string(&value.to_string(), ',', 3),
+        add_spacers(&format!("{:X}", value), ' ', 2),
+        add_spacers(&value.to_string(), ',', 3),
         value,
         bin_string(value, num_bits),
     )
 }
 
 
-fn spaced_string(string: &str, spacer: char, block_len: u32) -> String {
+fn add_spacers(string: &str, spacer: char, block_len: u32) -> String {
     let mut chars: Vec<char> = Vec::new();
 
     for (i, c) in string.chars().rev().enumerate() {
@@ -139,17 +195,25 @@ fn parse_int(arg: &str) -> Option<i64> {
         return None;
     }
 
-    let trimmed = arg.trim_start_matches('0');
+    let mut trimmed = arg.trim_start_matches('0');
     if trimmed.is_empty() {
         return Some(0);
     }
 
-    let radix: u32 = match trimmed.chars().next().unwrap().to_ascii_lowercase() {
-        'b' => 2,
-        'o' => 7,
-        'x' => 16,
-        _ => 10,
-    };
+    let mut radix: u32 = 10;
+    if trimmed.starts_with('b') {
+        radix = 2;
+        trimmed = trimmed.trim_start_matches('b');
+    } else if trimmed.starts_with('o') {
+        radix = 8;
+        trimmed = trimmed.trim_start_matches('o');
+    } else if trimmed.starts_with('d') {
+        radix = 10;
+        trimmed = trimmed.trim_start_matches('d');
+    } else if trimmed.starts_with('x') {
+        radix = 16;
+        trimmed = trimmed.trim_start_matches('x');
+    }
 
     match i64::from_str_radix(trimmed, radix) {
         Ok(value) => Some(value),
