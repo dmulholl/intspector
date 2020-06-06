@@ -6,7 +6,7 @@ use arguably::ArgParser;
 
 
 fn helptext() -> &'static str {
-"\
+"
 Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
 
   Integer conversion utility. Accepts integer input in [b]inary, [o]ctal,
@@ -101,7 +101,7 @@ fn bit_size(value: i64, user_bits: Option<u32>) -> (u32, u32) {
         min_bits = (value as f64).log2().floor() as u32 + 1;
         num_bits = user_bits.unwrap_or(min_bits);
     } else {
-        min_bits = (value.abs() as f64).log2().floor() as u32 + 2;
+        min_bits = (value.abs() as f64).log2().ceil() as u32 + 1;
         num_bits = match user_bits {
             Some(value) => value,
             None => {
