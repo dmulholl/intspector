@@ -37,7 +37,7 @@ Flags:
 fn main() {
     let mut parser = ArgParser::new()
         .helptext(helptext())
-        .version("0.1.0")
+        .version("0.2.1")
         .option("bits b");
 
     if let Err(err) = parser.parse() {
