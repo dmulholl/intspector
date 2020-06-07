@@ -5,7 +5,11 @@ use std::iter::FromIterator;
 use arguably::ArgParser;
 
 
-fn helptext() -> &'static str {
+#[cfg(test)]
+mod tests;
+
+
+fn help() -> &'static str {
 "
 Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
 
@@ -19,49 +23,98 @@ Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
 
   - Accepts integer literals with a leading zero, e.g. 0x123.
   - Accepts multiple arguments.
-  - Displays the two's complement for negative integers.
+  - Accepts input in the signed 64-bit integer range.
+  - Displays the two's complement value for negative integers.
 
 Arguments:
-  [integers]        List of integers to convert.
+  [integers]            List of integers to convert.
 
 Options:
-  -b, --bits <n>    Number of two's complement bits for negative integers.
+  -b, --bits <n>        Number of binary digits to display. (Determines the two's
+                        complement value for negative integers.)
+
+Flags:
+  -h, --help            Print this help text.
+  -v, --version         Print the application's version number.
+
+Commands:
+  c2u, char2unicode     Convert character literals to unicode code points.
+  u2c, unicode2char     Convert unicode code points to character literals.
+"
+}
+
+
+fn help_c2u() -> &'static str {
+"
+Usage: intspector char2unicode
+
+  Converts character literals to unicode code points.
 
 Flags:
   -h, --help        Print this help text.
-  -v, --version     Print the application's version number.
+"
+}
+
+
+fn help_u2c() -> &'static str {
+"
+Usage: intspector unicode2char
+
+  Converts unicode code points to character literals.
+
+Flags:
+  -h, --help        Print this help text.
 "
 }
 
 
 fn main() {
     let mut parser = ArgParser::new()
-        .helptext(helptext())
-        .version("0.2.1")
-        .option("bits b");
+        .helptext(help())
+        .version("0.3.0")
+        .option("bits b")
+        .command("c2u char2unicode", ArgParser::new()
+            .helptext(help_c2u())
+        )
+        .command("u2c unicode2char", ArgParser::new()
+            .helptext(help_u2c())
+        );
 
     if let Err(err) = parser.parse() {
         err.exit();
     }
 
-    let user_bits: Option<u32> = match parser.value("bits").unwrap() {
+    if parser.has_cmd() {
+        let cmd_name = parser.cmd_name().unwrap();
+        if cmd_name == "char2unicode" || cmd_name == "c2u" {
+            cmd_char2unicode(parser.cmd_parser().unwrap());
+        } else if cmd_name == "unicode2char" || cmd_name == "u2c" {
+            cmd_unicode2char(parser.cmd_parser().unwrap());
+        }
+    } else {
+        default_action(&parser);
+    }
+}
+
+
+fn default_action(parser: &ArgParser) {
+    let bits_arg: Option<u32> = match parser.value("bits").unwrap() {
         Some(arg) => {
             match arg.parse::<u32>() {
                 Ok(value) => Some(value),
                 Err(_) => {
-                    eprintln!("Error: cannot parse option value '{}' as an integer.", arg);
+                    eprintln!("Error: cannot parse '{}' as a 32-bit unsigned integer.", arg);
                     std::process::exit(1);
                 }
             }
         },
         None => None
     };
-
     if parser.has_args() {
         print_termline();
         for arg in parser.args() {
             match parse_int(&arg) {
-                Some(value) => println!("{}", int_info(value, user_bits)),
+                Some(value) => println!("{}", int_info(value, bits_arg)),
                 None => println!("Error: cannot parse '{}' as a 64-bit signed integer.", arg),
             };
             print_termline();
@@ -70,68 +123,128 @@ fn main() {
 }
 
 
-fn int_info(value: i64, user_bits: Option<u32>) -> String {
-    let (min_bits, num_bits) = bit_size(value, user_bits);
-    let disp_value: u64;
-
-    if value >= 0 {
-        disp_value = value as u64;
-    } else {
-        if num_bits < 64 {
-            disp_value = (2 as u64).pow(num_bits as u32) - value.abs() as u64;
-        } else if num_bits == 64 {
-            disp_value = (u64::MAX - value.abs() as u64) + 1;
-        } else {
-            return "Error: unsupported bit size.".to_string();
-        }
+fn cmd_char2unicode(parser: &ArgParser) {
+    let mut argstring = String::new();
+    for arg in parser.args() {
+        argstring.push_str(&arg);
     }
-
-    info_header(value, min_bits, num_bits) + &uint_info(disp_value, num_bits)
+    if !argstring.is_empty() {
+        print_termline();
+    }
+    for c in argstring.chars() {
+        println!("lit: '{}'", c);
+        println!("{}", uint_info(c as u64, std_bits(c as i64)));
+        print_termline();
+    }
 }
 
 
-fn bit_size(value: i64, user_bits: Option<u32>) -> (u32, u32) {
-    let min_bits: u32;
-    let mut num_bits: u32;
-
-    if value == 0 {
-        min_bits = 1;
-        num_bits = user_bits.unwrap_or(1);
-    } else if value > 0 {
-        min_bits = (value as f64).log2().floor() as u32 + 1;
-        num_bits = user_bits.unwrap_or(min_bits);
-    } else {
-        min_bits = (value.abs() as f64).log2().ceil() as u32 + 1;
-        num_bits = match user_bits {
+fn cmd_unicode2char(parser: &ArgParser) {
+    if parser.has_args() {
+        print_termline();
+    }
+    for arg in parser.args() {
+        let arg_as_i64 = match parse_int(&arg) {
             Some(value) => value,
             None => {
-                let mut best_fit = 64;
-                for std_size in vec![8, 16, 32] {
-                    if min_bits <= std_size {
-                        best_fit = std_size;
-                        break;
-                    }
-                }
-                best_fit
+                println!("Error: cannot parse '{}' as an integer.", arg);
+                print_termline();
+                continue;
             }
         };
+        if arg_as_i64 < 0 {
+            println!("Error: invalid input '{}'.", arg);
+            continue;
+        }
+        let arg_as_u32 = arg_as_i64 as u32;
+        let arg_as_char = match std::char::from_u32(arg_as_u32) {
+            Some(value) => value,
+            None => {
+                println!("Error: {} is not a valid unicode scalar value.", arg_as_u32);
+                print_termline();
+                continue;
+            }
+        };
+        println!("lit: '{}'", arg_as_char);
+        println!("{}", uint_info(arg_as_char as u64, std_bits(arg_as_char as i64)));
+        print_termline();
     }
-
-    if num_bits < min_bits {
-        num_bits = min_bits;
-    }
-    (min_bits, num_bits)
 }
 
 
-fn info_header(value: i64, min_bits: u32, num_bits: u32) -> String {
-    if value == 0 || value == 1 {
-        format!("req: 1 bit (unsigned)\n")
-    } else if value > 1 {
-        format!("req: {} bits (unsigned)\n", min_bits)
+fn int_info(value: i64, user_bits: Option<u32>) -> String {
+    let min_bits = min_bits(value);
+    let std_bits = std_bits(value);
+
+    let num_bits = if value >= 0 {
+        user_bits.unwrap_or(min_bits)
     } else {
-        format!("req: {} bits (signed), showing {}-bit two's complement\n", min_bits, num_bits)
+        user_bits.unwrap_or(std_bits)
+    };
+
+    if num_bits == 0 || num_bits > 64 {
+        return format!("Error: unsupported bit size.");
     }
+    if num_bits < min_bits {
+        return format!("Error: {} requires at least {} bits.", value, min_bits);
+    }
+
+    let disp_value: u64 = if value >= 0 {
+        value as u64
+    } else {
+        twos_complement(value.abs() as u64, num_bits)
+    };
+
+    let plural = if min_bits == 1 { "" } else { "s" };
+    let requires = if value >= 0 {
+        format!("req: {} bit{} (unsigned)\n", min_bits, plural)
+    } else {
+        format!(
+            "req: {} bit{} (signed), showing {}-bit two's complement\n",
+            min_bits, plural, num_bits
+        )
+    };
+    requires + &uint_info(disp_value, num_bits)
+}
+
+
+fn twos_complement(value: u64, num_bits: u32) -> u64 {
+    assert!(num_bits <= 64);
+    if value == 0 {
+        return 0;
+    }
+    if num_bits < 64 {
+        let cap = (2 as u64).pow(num_bits);
+        assert!(value < cap);
+        return cap - value;
+    }
+    return (u64::MAX - value) + 1
+}
+
+
+/// Minimum number of bits required to represent the integer. For positive input,
+/// gives the number of signed bits. For negative input, gives the number of two's
+/// complement bits.
+fn min_bits(value: i64) -> u32 {
+    if value == 0 {
+        1
+    } else if value > 0 {
+        (value as f64).log2().floor() as u32 + 1
+    } else {
+        (value.abs() as f64).log2().ceil() as u32 + 1
+    }
+}
+
+
+/// Returns the min_bits() value rounded up to a standard integer size.
+fn std_bits(value: i64) -> u32 {
+    let min_bits = min_bits(value);
+    for std_size in vec![8, 16, 32, 64] {
+        if min_bits <= std_size {
+            return std_size;
+        }
+    }
+    min_bits
 }
 
 
