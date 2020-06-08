@@ -4,7 +4,6 @@ extern crate arguably;
 use std::iter::FromIterator;
 use arguably::ArgParser;
 
-
 #[cfg(test)]
 mod tests;
 
