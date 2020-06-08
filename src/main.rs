@@ -30,8 +30,8 @@ Arguments:
   [integers]            List of integers to convert.
 
 Options:
-  -b, --bits <n>        Number of binary digits to display. (Determines the two's
-                        complement value for negative integers.)
+  -b, --bits <n>        Number of binary digits to display. (Determines the
+                        two's complement value for negative integers.)
 
 Flags:
   -h, --help            Print this help text.
@@ -46,9 +46,14 @@ Commands:
 
 fn help_c2u() -> &'static str {
 "
-Usage: intspector char2unicode
+Usage: intspector c2u|char2unicode [ARGUMENTS]
 
-  Converts character literals to unicode code points.
+  Converts character literals to unicode code points, i.e. takes a list of
+  chacters as input and prints out the unicode code point for each character
+  in the list.
+
+Arguments:
+  [characters]      List of character literals.
 
 Flags:
   -h, --help        Print this help text.
@@ -58,9 +63,13 @@ Flags:
 
 fn help_u2c() -> &'static str {
 "
-Usage: intspector unicode2char
+Usage: intspector u2c|unicode2char [ARGUMENTS]
 
-  Converts unicode code points to character literals.
+  Converts unicode code points to character literals. Code points can be
+  specified in binary, octal, decimal, or hexadecimal base.
+
+Arguments:
+  [integers]        List of unicode code points.
 
 Flags:
   -h, --help        Print this help text.
@@ -75,23 +84,18 @@ fn main() {
         .option("bits b")
         .command("c2u char2unicode", ArgParser::new()
             .helptext(help_c2u())
+            .callback(cmd_char2unicode)
         )
         .command("u2c unicode2char", ArgParser::new()
             .helptext(help_u2c())
+            .callback(cmd_unicode2char)
         );
 
     if let Err(err) = parser.parse() {
         err.exit();
     }
 
-    if parser.has_cmd() {
-        let cmd_name = parser.cmd_name().unwrap();
-        if cmd_name == "char2unicode" || cmd_name == "c2u" {
-            cmd_char2unicode(parser.cmd_parser().unwrap());
-        } else if cmd_name == "unicode2char" || cmd_name == "u2c" {
-            cmd_unicode2char(parser.cmd_parser().unwrap());
-        }
-    } else {
+    if !parser.has_cmd() {
         default_action(&parser);
     }
 }
@@ -123,7 +127,7 @@ fn default_action(parser: &ArgParser) {
 }
 
 
-fn cmd_char2unicode(parser: &ArgParser) {
+fn cmd_char2unicode(_cmd: &str, parser: &ArgParser) {
     let mut argstring = String::new();
     for arg in parser.args() {
         argstring.push_str(&arg);
@@ -139,7 +143,7 @@ fn cmd_char2unicode(parser: &ArgParser) {
 }
 
 
-fn cmd_unicode2char(parser: &ArgParser) {
+fn cmd_unicode2char(_cmd: &str, parser: &ArgParser) {
     if parser.has_args() {
         print_termline();
     }
@@ -154,6 +158,12 @@ fn cmd_unicode2char(parser: &ArgParser) {
         };
         if arg_as_i64 < 0 {
             println!("Error: invalid input '{}'.", arg);
+            print_termline();
+            continue;
+        }
+        if let Some(ascii) = ascii(arg_as_i64) {
+            println!("lit: {}", ascii);
+            print_termline();
             continue;
         }
         let arg_as_u32 = arg_as_i64 as u32;
@@ -165,8 +175,7 @@ fn cmd_unicode2char(parser: &ArgParser) {
                 continue;
             }
         };
-        println!("lit: '{}'", arg_as_char);
-        println!("{}", uint_info(arg_as_char as u64, std_bits(arg_as_char as i64)));
+        println!("lit: {}", arg_as_char);
         print_termline();
     }
 }
@@ -218,7 +227,7 @@ fn ascii(value: i64) -> Option<String> {
         return None;
     }
     if value > 32 && value < 127 {
-        return Some(format!("'{}'", value as u8 as char));
+        return Some(format!("{}", value as u8 as char));
     }
     let name = match value {
         0 => "[null]",
@@ -275,9 +284,9 @@ fn twos_complement(value: u64, num_bits: u32) -> u64 {
 }
 
 
-/// Minimum number of bits required to represent the integer. For positive input,
-/// gives the number of signed bits. For negative input, gives the number of two's
-/// complement bits.
+// Minimum number of bits required to represent the integer. For positive input,
+// gives the number of signed bits. For negative input, gives the number of two's
+// complement bits.
 fn min_bits(value: i64) -> u32 {
     if value == 0 {
         1
@@ -289,7 +298,7 @@ fn min_bits(value: i64) -> u32 {
 }
 
 
-/// Returns the min_bits() value rounded up to a standard integer size.
+// Returns the min_bits() value rounded up to a standard integer size.
 fn std_bits(value: i64) -> u32 {
     let min_bits = min_bits(value);
     for std_size in vec![8, 16, 32, 64] {
