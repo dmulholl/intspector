@@ -204,7 +204,60 @@ fn int_info(value: i64, user_bits: Option<u32>) -> String {
             min_bits, plural, num_bits
         )
     };
-    requires + &uint_info(disp_value, num_bits)
+
+    let mut output = requires + &uint_info(disp_value, num_bits);
+    if let Some(ascii) = ascii(value) {
+        output += &format!("\nasc: {}", ascii);
+    }
+    output
+}
+
+
+fn ascii(value: i64) -> Option<String> {
+    if value < 0 || value > 127 {
+        return None;
+    }
+    if value > 32 && value < 127 {
+        return Some(format!("'{}'", value as u8 as char));
+    }
+    let name = match value {
+        0 => "[null]",
+        1 => "[start of heading]",
+        2 => "[start of text]",
+        3 => "[end of text]",
+        4 => "[end of transmission]",
+        5 => "[enquiry]",
+        6 => "[acknowledge]",
+        7 => "[bell]",
+        8 => "[backspace]",
+        9 => "[horizontal tab]",
+        10 => "[line feed]",
+        11 => "[vertical tab]",
+        12 => "[form feed]",
+        13 => "[carriage return]",
+        14 => "[shift out]",
+        15 => "[shift in]",
+        16 => "[data link escape]",
+        17 => "[device control 1]",
+        18 => "[device control 2]",
+        19 => "[device control 3]",
+        20 => "[device control 4]",
+        21 => "[negative acknowledge]",
+        22 => "[synchronous idle]",
+        23 => "[end of transmission block]",
+        24 => "[cancel]",
+        25 => "[end of medium]",
+        26 => "[substitute]",
+        27 => "[escape]",
+        28 => "[file separator]",
+        29 => "[group separator]",
+        30 => "[record separator]",
+        31 => "[unit separator]",
+        32 => "[space]",
+        127 => "[del]",
+        _ => panic!("unexpected value"),
+    };
+    Some(name.to_string())
 }
 
 
