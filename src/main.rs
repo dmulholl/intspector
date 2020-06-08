@@ -71,7 +71,7 @@ Flags:
 fn main() {
     let mut parser = ArgParser::new()
         .helptext(help())
-        .version("0.3.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .option("bits b")
         .command("c2u char2unicode", ArgParser::new()
             .helptext(help_c2u())
