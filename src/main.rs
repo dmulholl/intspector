@@ -39,6 +39,9 @@ Flags:
 Commands:
   c2u, char2unicode     Convert character literals to unicode code points.
   u2c, unicode2char     Convert unicode code points to character literals.
+
+Command Help:
+  help <command>        Print the specified command's help text.
 "
 }
 
