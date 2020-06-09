@@ -6,6 +6,7 @@ edition = "2018"
 license= "MIT"
 repository = "https://github.com/dmulholl/intspector"
 description = "A command line integer conversion utility."
+homepage = "https://www.dmulholl.com/dev/intspector.html"
 
 [dependencies]
 term_size = "0.3"
