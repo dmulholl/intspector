@@ -138,8 +138,8 @@ fn cmd_char2unicode(_cmd: &str, parser: &ArgParser) {
         print_termline();
     }
     for c in argstring.chars() {
-        println!("lit: '{}'", c);
-        println!("{}", uint_info(c as u64, std_bits(c as i64)));
+        println!("lit: {}", c);
+        println!("uni: U+{:04X}", c as u32);
         print_termline();
     }
 }
@@ -164,6 +164,7 @@ fn cmd_unicode2char(_cmd: &str, parser: &ArgParser) {
             continue;
         }
         if let Some(ascii) = ascii(arg_as_i64) {
+            println!("uni: U+{:04X}", arg_as_i64);
             println!("lit: {}", ascii);
             print_termline();
             continue;
@@ -177,6 +178,7 @@ fn cmd_unicode2char(_cmd: &str, parser: &ArgParser) {
                 continue;
             }
         };
+        println!("uni: U+{:04X}", arg_as_u32);
         println!("lit: {}", arg_as_char);
         print_termline();
     }
