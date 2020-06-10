@@ -1,6 +1,6 @@
 [package]
 name = "intspector"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Darren Mulholland <dmulholl@tcd.ie>"]
 edition = "2018"
 license= "MIT"

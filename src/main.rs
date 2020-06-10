@@ -91,7 +91,8 @@ fn main() {
         .command("u2c unicode2char", ArgParser::new()
             .helptext(help_u2c())
             .callback(cmd_unicode2char)
-        );
+        )
+        .enable_help_command();
 
     if let Err(err) = parser.parse() {
         err.exit();
