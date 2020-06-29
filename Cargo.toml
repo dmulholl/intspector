@@ -10,5 +10,5 @@ homepage = "https://www.dmulholl.com/dev/intspector.html"
 
 [dependencies]
 term_size = "0.3"
-arguably = { path = "../arguably", version = "0.4.0" }
+arguably = { path = "../arguably", version = "0.6.0" }
 

@@ -1,4 +1,7 @@
-use super::*;
+use intspector::min_bits;
+use intspector::bin_string;
+use intspector::twos_complement;
+use intspector::parse_int;
 
 #[test]
 fn min_bits_pos_input() {
