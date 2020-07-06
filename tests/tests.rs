@@ -100,6 +100,7 @@ fn parse_int_no_prefix() {
     assert_eq!(parse_int("1"), Some(1));
     assert_eq!(parse_int("01"), Some(1));
     assert_eq!(parse_int("101"), Some(101));
+    assert_eq!(parse_int("-101"), Some(-101));
 }
 
 #[test]

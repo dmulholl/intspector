@@ -11,8 +11,7 @@ use intspector::parse_int;
 use intspector::ascii;
 
 
-fn help() -> &'static str {
-"
+const HELP: &str = "
 Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
 
   Integer conversion utility. Accepts integer input in [b]inary, [o]ctal,
@@ -45,12 +44,10 @@ Commands:
 
 Command Help:
   help <command>        Print the specified command's help text.
-"
-}
+";
 
 
-fn help_c2u() -> &'static str {
-"
+const HELP_C2U: &str = "
 Usage: intspector c2u|char2unicode [ARGUMENTS]
 
   Converts character literals to unicode code points, i.e. takes a list of
@@ -62,12 +59,10 @@ Arguments:
 
 Flags:
   -h, --help        Print this help text.
-"
-}
+";
 
 
-fn help_u2c() -> &'static str {
-"
+const HELP_U2C: &str = "
 Usage: intspector u2c|unicode2char [ARGUMENTS]
 
   Converts unicode code points to character literals. Code points can be
@@ -78,21 +73,20 @@ Arguments:
 
 Flags:
   -h, --help        Print this help text.
-"
-}
+";
 
 
 fn main() {
     let mut parser = ArgParser::new()
-        .helptext(help())
+        .helptext(HELP)
         .version(env!("CARGO_PKG_VERSION"))
         .option("bits b")
         .command("c2u char2unicode", ArgParser::new()
-            .helptext(help_c2u())
+            .helptext(HELP_C2U)
             .callback(cmd_char2unicode)
         )
         .command("u2c unicode2char", ArgParser::new()
-            .helptext(help_u2c())
+            .helptext(HELP_U2C)
             .callback(cmd_unicode2char)
         );
 
