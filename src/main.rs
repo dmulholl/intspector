@@ -94,7 +94,7 @@ fn main() {
         err.exit();
     }
 
-    if !parser.has_cmd() {
+    if parser.cmd_name.is_none() {
         default_action(&parser);
     }
 }
@@ -113,9 +113,9 @@ fn default_action(parser: &ArgParser) {
         },
         None => None
     };
-    if parser.has_args() {
+    if parser.args.len() > 0 {
         print_termline();
-        for arg in parser.args() {
+        for arg in &parser.args {
             match parse_int(&arg) {
                 Some(value) => println!("{}", int_info(value, bits_arg)),
                 None => println!("Error: cannot parse '{}' as a 64-bit signed integer.", arg),
@@ -126,9 +126,9 @@ fn default_action(parser: &ArgParser) {
 }
 
 
-fn cmd_char2unicode(_cmd: &str, parser: &ArgParser) {
+fn cmd_char2unicode(_cmd_name: &str, cmd_parser: &ArgParser) {
     let mut argstring = String::new();
-    for arg in parser.args() {
+    for arg in &cmd_parser.args {
         argstring.push_str(&arg);
     }
     if !argstring.is_empty() {
@@ -142,11 +142,11 @@ fn cmd_char2unicode(_cmd: &str, parser: &ArgParser) {
 }
 
 
-fn cmd_unicode2char(_cmd: &str, parser: &ArgParser) {
-    if parser.has_args() {
+fn cmd_unicode2char(_cmd_name: &str, cmd_parser: &ArgParser) {
+    if cmd_parser.args.len() > 0 {
         print_termline();
     }
-    for arg in parser.args() {
+    for arg in &cmd_parser.args {
         let arg_as_i64 = match parse_int(&arg) {
             Some(value) => value,
             None => {
