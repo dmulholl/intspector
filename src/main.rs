@@ -101,7 +101,7 @@ fn main() {
 
 
 fn default_action(parser: &ArgParser) {
-    let bits_arg: Option<u32> = match parser.value("bits").unwrap() {
+    let bits_arg: Option<u32> = match parser.value("bits") {
         Some(arg) => {
             match arg.parse::<u32>() {
                 Ok(value) => Some(value),
