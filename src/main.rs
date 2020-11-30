@@ -12,7 +12,7 @@ use intspector::ascii;
 
 
 const HELP: &str = "
-Usage: intspector [FLAGS] [OPTIONS] [ARGUMENTS]
+Usage: intspector [integers]
 
   Integer conversion utility. Accepts integer input in [b]inary, [o]ctal,
   [d]ecimal, or he[x]adecimal base, then displays the number in all four bases.
@@ -48,7 +48,7 @@ Command Help:
 
 
 const HELP_C2U: &str = "
-Usage: intspector c2u|char2unicode [ARGUMENTS]
+Usage: intspector c2u|char2unicode [characters]
 
   Converts character literals to unicode code points, i.e. takes a list of
   chacters as input and prints out the unicode code point for each character
@@ -63,7 +63,7 @@ Flags:
 
 
 const HELP_U2C: &str = "
-Usage: intspector u2c|unicode2char [ARGUMENTS]
+Usage: intspector u2c|unicode2char [integers]
 
   Converts unicode code points to character literals. Code points can be
   specified in binary, octal, decimal, or hexadecimal base.
