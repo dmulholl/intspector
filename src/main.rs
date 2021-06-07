@@ -39,8 +39,8 @@ Flags:
   -v, --version         Print the application's version number.
 
 Commands:
-  l2cp, literal-to-codepoint    Convert character literals to code points.
   cp2l, codepoint-to-literal    Convert code points to character literals.
+  l2cp, literal-to-codepoint    Convert character literals to code points.
 
 Command Help:
   help <command>        Print the specified command's help text.
