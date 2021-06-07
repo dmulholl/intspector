@@ -39,20 +39,20 @@ Flags:
   -v, --version         Print the application's version number.
 
 Commands:
-  c2u, char2unicode     Convert character literals to unicode code points.
-  u2c, unicode2char     Convert unicode code points to character literals.
+  l2cp, literal-to-codepoint    Convert character literals to code points.
+  cp2l, codepoint-to-literal    Convert code points to character literals.
 
 Command Help:
   help <command>        Print the specified command's help text.
 ";
 
 
-const HELP_C2U: &str = "
-Usage: intspector c2u|char2unicode [characters]
+const HELP_L2CP: &str = "
+Usage: intspector l2cp|literal-to-codepoint [characters]
 
   Converts character literals to unicode code points, i.e. takes a list of
-  chacters as input and prints out the unicode code point for each character
-  in the list.
+  chacters literals as input and prints out the unicode code point for each
+  character in the list.
 
 Arguments:
   [characters]      List of character literals.
@@ -62,8 +62,8 @@ Flags:
 ";
 
 
-const HELP_U2C: &str = "
-Usage: intspector u2c|unicode2char [integers]
+const HELP_CP2L: &str = "
+Usage: intspector cp2l|codepoint-to-literal [integers]
 
   Converts unicode code points to character literals. Code points can be
   specified in binary, octal, decimal, or hexadecimal base.
@@ -81,13 +81,13 @@ fn main() {
         .helptext(HELP)
         .version(env!("CARGO_PKG_VERSION"))
         .option("bits b")
-        .command("c2u char2unicode", ArgParser::new()
-            .helptext(HELP_C2U)
-            .callback(cmd_char2unicode)
+        .command("l2cp literal-to-codepoint", ArgParser::new()
+            .helptext(HELP_L2CP)
+            .callback(cmd_l2cp)
         )
-        .command("u2c unicode2char", ArgParser::new()
-            .helptext(HELP_U2C)
-            .callback(cmd_unicode2char)
+        .command("cp2l codepoint-to-literal", ArgParser::new()
+            .helptext(HELP_CP2L)
+            .callback(cmd_cp2l)
         );
 
     if let Err(err) = parser.parse() {
@@ -126,7 +126,7 @@ fn default_action(parser: &ArgParser) {
 }
 
 
-fn cmd_char2unicode(_cmd_name: &str, cmd_parser: &ArgParser) {
+fn cmd_l2cp(_cmd_name: &str, cmd_parser: &ArgParser) {
     let mut argstring = String::new();
     for arg in &cmd_parser.args {
         argstring.push_str(&arg);
@@ -142,7 +142,7 @@ fn cmd_char2unicode(_cmd_name: &str, cmd_parser: &ArgParser) {
 }
 
 
-fn cmd_unicode2char(_cmd_name: &str, cmd_parser: &ArgParser) {
+fn cmd_cp2l(_cmd_name: &str, cmd_parser: &ArgParser) {
     if cmd_parser.args.len() > 0 {
         print_termline();
     }
@@ -155,7 +155,7 @@ fn cmd_unicode2char(_cmd_name: &str, cmd_parser: &ArgParser) {
                 continue;
             }
         };
-        if arg_as_i64 < 0 {
+        if arg_as_i64 < 0 || arg_as_i64 > 0xFFFF_FFFF {
             println!("Error: invalid input '{}'.", arg);
             print_termline();
             continue;

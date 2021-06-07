@@ -8,7 +8,7 @@ checksum = "f318abfeef18f4d87bd9369485ad3d22d397fe48d712f272481a180923b8a369"
 
 [[package]]
 name = "intspector"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "arguably",
  "term_size",
